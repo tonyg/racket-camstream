@@ -49,8 +49,8 @@
 ;; Updates base-pixels in place
 (: integrate-argb! (Integer Integer Bytes Bytes -> Void))
 (define (integrate-argb! w h base-pixels delta-pixels)
-  (for*: ([y : Exact-Nonnegative-Integer h]
-	  [x : Exact-Nonnegative-Integer w])
+  (for*: ([y : Exact-Nonnegative-Integer (in-range h)]
+	  [x : Exact-Nonnegative-Integer (in-range w)])
     (define: i : Integer (* 4 (+ x (* y w))))
     (void
      (integer->integer-bytes
