@@ -4,36 +4,16 @@
 
 (provide kernel-encode kernel-decode integrate-argb!)
 
-(: kernel-encode (Integer Integer -> Integer))
-(define (kernel-encode old-pixel new-pixel)
-  (+ (reduce-precision new-pixel)
-     (negate-pixel (reduce-precision old-pixel))
-     #x404040))
-
-(: kernel-decode (Integer Integer -> Integer))
-(define (kernel-decode base-pixel delta-pixel)
-  (bitwise-and #xffffff
-	       (arithmetic-shift (clamp-pixel (- delta-pixel
-						 (negate-pixel (reduce-precision base-pixel))))
-				 2)))
-
-(: reduce-precision (Integer -> Integer))
-(define (reduce-precision pixel)
-  (bitwise-and (arithmetic-shift pixel -2) #x3f3f3f))
-
-(: negate-pixel (Integer -> Integer))
-(define (negate-pixel pixel)
-  (+ #x010101 (bitwise-xor pixel #x3f3f3f)))
-
 (define-syntax clamp-channel
   (syntax-rules ()
     ((_ high-mask clamped-mask channel-keep channel-discard pixel)
-     (match (bitwise-and pixel high-mask)
-       [0            (bitwise-ior (bitwise-and pixel channel-discard) clamped-mask)]
-       [clamped-mask pixel]
-       [_            (bitwise-ior (bitwise-and pixel channel-discard) channel-keep)]))))
+     (let ((v (bitwise-and pixel high-mask)))
+       (cond
+         [(= v 0) (bitwise-ior (bitwise-and pixel channel-discard) clamped-mask)]
+         [(= v clamped-mask) pixel]
+         [else (bitwise-ior (bitwise-and pixel channel-discard) channel-keep)])))))
 
-(: clamp-pixel (Integer -> Integer))
+(: clamp-pixel (Index -> Fixnum))
 (define (clamp-pixel pixel)
   ;; Clamp required because JPG occasionally sends a delta too
   ;; high or too low, leaving us with out-of-range pixels.
@@ -46,6 +26,30 @@
 	   pixel))
      #x404040))
 
+(: kernel-encode (Index Index -> Index))
+(define (kernel-encode old-pixel new-pixel)
+  (assert
+   (+ (reduce-precision new-pixel)
+      (negate-pixel (reduce-precision old-pixel))
+      #x404040)
+   index?))
+
+(: kernel-decode (Index Index -> Index))
+(define (kernel-decode base-pixel delta-pixel)
+  (bitwise-and #xffffff
+	       (arithmetic-shift (clamp-pixel (assert (- delta-pixel
+                                                         (negate-pixel (reduce-precision base-pixel)))
+                                                      index?))
+				 2)))
+
+(: reduce-precision (Fixnum -> Index))
+(define (reduce-precision pixel)
+  (bitwise-and (arithmetic-shift pixel -2) #x3f3f3f))
+
+(: negate-pixel (Index -> Fixnum))
+(define (negate-pixel pixel)
+  (+ #x010101 (bitwise-xor pixel #x3f3f3f)))
+
 ;; Updates base-pixels in place
 (: integrate-argb! (Integer Integer Bytes Bytes -> Void))
 (define (integrate-argb! w h base-pixels delta-pixels)
@@ -54,6 +58,6 @@
     (define: i : Integer (* 4 (+ x (* y w))))
     (void
      (integer->integer-bytes
-      (kernel-decode (integer-bytes->integer base-pixels #f #t i (+ i 4))
-		     (integer-bytes->integer delta-pixels #f #t i (+ i 4)))
+      (kernel-decode (assert (integer-bytes->integer base-pixels #f #t i (+ i 4)) index?)
+		     (assert (integer-bytes->integer delta-pixels #f #t i (+ i 4)) index?))
       4 #f #t base-pixels i))))
