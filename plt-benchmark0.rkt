@@ -43,39 +43,43 @@
 	   pixel))
      #x404040))
 
-(define (integrate-delta base0 delta)
-  (define w (send delta get-width))
-  (define h (send delta get-height))
-  (define base (or base0 (let* ((b (make-object bitmap% w h))
-				(dc (make-object bitmap-dc% b)))
-			   (send dc set-brush "black" 'solid)
-			   (send dc draw-rectangle 0 0 w h)
-			   b)))
-  (define base-pixels (make-bytes (* w h 4)))
-  (define delta-pixels (make-bytes (* w h 4)))
-  (send base get-argb-pixels 0 0 w h base-pixels)
-  (send delta get-argb-pixels 0 0 w h delta-pixels)
-  (for* ([y (in-range h)] [x (in-range w)])
-    (define i (* 4 (+ x (* y w))))
-    (integer->integer-bytes
-     (kernel-decode (integer-bytes->integer base-pixels #f #t i (+ i 4))
-		    (integer-bytes->integer delta-pixels #f #t i (+ i 4)))
-     4 #f #t base-pixels i))
-  (define result (make-object bitmap% w h))
-  (send result set-argb-pixels 0 0 w h base-pixels)
-  result)
+(define w 160)
+(define h 120)
 
-(define (jpeg-bytes->bitmap bs)
-  (make-object bitmap% (open-input-bytes bs) 'jpeg))
+(define (integrate-delta base-pixels delta-pixels)
+  (if (not base-pixels)
+      #f
+      (begin
+	(for* ([y (in-range h)] [x (in-range w)])
+	  (define i (* 4 (+ x (* y w))))
+	  (integer->integer-bytes
+	   (kernel-decode (integer-bytes->integer base-pixels #f #t i (+ i 4))
+			  (integer-bytes->integer delta-pixels #f #t i (+ i 4)))
+	   4 #f #t base-pixels i))
+	base-pixels)))
+
+(define (jpeg-bytes->pixels bs)
+  (define bm (make-object bitmap% (open-input-bytes bs) 'jpeg))
+  (when (or (not (= w (send bm get-width)))
+	    (not (= h (send bm get-height))))
+    (error 'wrong-dimensions "Wrong dimensions: ~v"
+	   (list w h (send bm get-width) (send bm get-height))))
+  (define pixels (make-bytes (* w h 4)))
+  (send bm get-argb-pixels 0 0 w h pixels)
+  pixels)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define frames0 (map (lambda (f) (cons (car f) (jpeg-bytes->bitmap (cdr f))))
-		     (read)))
+(write 'decompressing) (newline) (flush-output)
+(define frames0
+  (time
+   (map (lambda (f) (cons (car f) (jpeg-bytes->pixels (cdr f))))
+	(read))))
+(write 'decoding) (newline) (flush-output)
 (time
  (let loop ((frames frames0) (frame #f))
    (if (null? frames)
-       frame
+       'done
        (match (car frames)
 	 [`(i . ,jpeg)
 	  (loop (cdr frames) jpeg)]
