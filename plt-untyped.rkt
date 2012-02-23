@@ -66,7 +66,7 @@
   (define delta-pixels (make-bytes (* w h 4)))
   (send base get-argb-pixels 0 0 w h base-pixels)
   (send delta get-argb-pixels 0 0 w h delta-pixels)
-  (for* ([y h] [x w])
+  (for* ([y (in-range h)] [x (in-range w)])
     (define i (* 4 (+ x (* y w))))
     (integer->integer-bytes
      (kernel-decode (integer-bytes->integer base-pixels #f #t i (+ i 4))
