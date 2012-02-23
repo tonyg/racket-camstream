@@ -1,13 +1,8 @@
 #lang racket/base
 
-(require racket/pretty)
-(require racket/class)
-(require racket/gui/base)
-(require racket/draw)
 (require racket/match)
-(require (only-in web-server/private/gzip gunzip/bytes))
-
-(require (planet tonyg/bitsyntax))
+(require racket/class)
+(require racket/draw)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -71,7 +66,7 @@
   result)
 
 (define (jpeg-bytes->bitmap bs)
-  (make-object bitmap% (open-input-bytes (bit-string->bytes bs)) 'jpeg))
+  (make-object bitmap% (open-input-bytes bs) 'jpeg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
