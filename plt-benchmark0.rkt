@@ -70,12 +70,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define frames0 (map (lambda (f) (cons (car f) (jpeg-bytes->bitmap (cdr f))))
+		     (read)))
 (time
- (let loop ((frames (read)) (frame #f))
+ (let loop ((frames frames0) (frame #f))
    (if (null? frames)
        frame
        (match (car frames)
 	 [`(i . ,jpeg)
-	  (loop (cdr frames) (jpeg-bytes->bitmap jpeg))]
+	  (loop (cdr frames) jpeg)]
 	 [`(p . ,jpeg)
-	  (loop (cdr frames) (integrate-delta frame (jpeg-bytes->bitmap jpeg)))]))))
+	  (loop (cdr frames) (integrate-delta frame jpeg))]))))
