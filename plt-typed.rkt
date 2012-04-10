@@ -68,7 +68,11 @@
       displayed-picture)))
 
 (define (read-main)
-  (with-handlers ([exn:break?
+  (with-handlers ([exn:stomp?
+		   (lambda (e)
+		     (pretty-print (exn:stomp-frame e))
+		     (raise e))]
+		  [exn:break?
 		   (lambda (e)
 		     (stomp-unsubscribe s "s1")
 		     (stomp-disconnect s)
@@ -76,7 +80,7 @@
     (define windows (make-hash))
     (let loop ()
       (match-define (stomp-frame 'MESSAGE headers body) (stomp-next-message s "s1"))
-      (define label (cond [(assq 'amqp-routing-key headers) => cadr] [else "???"]))
+      (define label (cond [(assq 'destination headers) => cadr] [else "???"]))
       (define window (hash-ref windows label
 			       (lambda ()
 				 (define w (make-object video-window% label))
