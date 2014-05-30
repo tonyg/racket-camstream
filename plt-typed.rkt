@@ -10,7 +10,7 @@
 (require rnrs/bytevectors-6)
 
 (require (planet tonyg/stomp))
-(require (planet tonyg/bitsyntax))
+(require bitsyntax)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

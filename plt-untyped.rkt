@@ -8,7 +8,7 @@
 (require (only-in web-server/private/gzip gunzip/bytes))
 
 (require (planet tonyg/stomp))
-(require (planet tonyg/bitsyntax))
+(require bitsyntax)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
